@@ -1,0 +1,9 @@
+# ใช้กับ Supabase CLI (supabase functions deploy / supabase db push)
+project_id = "metro-medical-stock"
+
+# ฟังก์ชันตรวจสิทธิ์ผู้เรียกเองในโค้ด จึงปิดการตรวจ JWT อัตโนมัติ
+[functions.admin-create-user]
+verify_jwt = false
+
+[functions.expiry-alert]
+verify_jwt = false

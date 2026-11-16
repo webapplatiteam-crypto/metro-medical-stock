@@ -1,0 +1,11 @@
+{
+  "name": "Metro Medical Stock",
+  "short_name": "MM Stock",
+  "description": "ระบบคลังเครื่องมือแพทย์ บริษัท เมโทร เมดิคอล จำกัด",
+  "start_url": "/#/dashboard",
+  "display": "standalone",
+  "background_color": "#F3F6FB",
+  "theme_color": "#0B2545",
+  "lang": "th",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
