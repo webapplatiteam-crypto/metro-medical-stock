@@ -15,13 +15,14 @@ const NAV = [
   { r: 'reports',   label: 'รายงาน / ส่งออก', show: () => true },
   { r: 'users',     label: 'ผู้ใช้ & สิทธิ์', show: can.admin },
   { r: 'settings',  label: 'ตั้งค่า / นำเข้า Excel', show: can.manage },
+  { r: 'help',      label: 'คู่มือการใช้งาน', show: () => true },
 ];
 
 // เส้นทาง → ไฟล์หน้า
 const PAGES = {
   dashboard: 'dashboard', receive: 'docedit', issue: 'docedit', adjust: 'docedit', transfer: 'docedit', dispose: 'docedit',
   count: 'docedit', approvals: 'documents', documents: 'documents', doc: 'docview', products: 'products',
-  product: 'productform', ledger: 'ledger', expiry: 'expiry', labels: 'labels', reports: 'reports', users: 'users', settings: 'settings',
+  product: 'productform', ledger: 'ledger', expiry: 'expiry', labels: 'labels', reports: 'reports', users: 'users', settings: 'settings', help: 'help',
 };
 
 const LOGO = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
@@ -53,6 +54,7 @@ function renderLogin(msg = '') {
         <label class="f">รหัสผ่าน<input class="i" type="password" name="password" autocomplete="current-password" required></label>
         <button class="b1" type="submit">เข้าสู่ระบบ</button>
         <button class="b3" type="button" data-forgot>ลืมรหัสผ่าน?</button>
+        <button class="b2" type="button" data-help>คู่มือการใช้งาน</button>
       </form>
     </section></div>`;
   const f = $('[data-login]');
@@ -62,6 +64,11 @@ function renderLogin(msg = '') {
     const { error } = await sb.auth.signInWithPassword({ email: f.email.value.trim(), password: f.password.value });
     btn.disabled = false;
     if (error) renderLogin(error.message === 'Invalid login credentials' ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : error.message);
+  };
+  $('[data-help]', f).onclick = async () => {
+    const { helpHtml, bindJumps } = await import('./pages/help.js');
+    const m = modal({ title: 'คู่มือการใช้งาน', wide: true, body: `<div style="display:flex;flex-direction:column;gap:12px">${helpHtml()}</div>` });
+    bindJumps(m.el);
   };
   $('[data-forgot]', f).onclick = async () => {
     const email = f.email.value.trim();

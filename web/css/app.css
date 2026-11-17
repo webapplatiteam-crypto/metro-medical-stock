@@ -156,3 +156,8 @@ table.t{border-collapse:collapse;width:100%}
   .printonly{display:block}
   .t th{position:static}
 }
+
+/* help */
+.help ol,.help ul{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.help p{margin:0}
+.help{scroll-margin-top:16px}
