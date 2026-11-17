@@ -135,9 +135,9 @@ export async function openCamera(onScan, { continuous = false, title = 'สแ�
   }
 }
 
-export const scanBoxHtml = (placeholder = 'ยิงบาร์โค้ด หรือพิมพ์รหัสแล้วกด Enter') => `
+export const scanBoxHtml = (placeholder = 'ยิงบาร์โค้ด หรือพิมพ์รหัสแล้วกด Enter') => { if (window.matchMedia('(max-width: 760px)').matches) placeholder = 'ยิง / พิมพ์รหัส แล้ว Enter'; return `
   <div class="scanbox noprint">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0A4DA2" stroke-width="2" aria-hidden="true"><path d="M3 5v14M6 5v14M10 5v14M13 5v14M17 5v14M21 5v14"/></svg>
     <input data-scan type="text" inputmode="text" autocomplete="off" placeholder="${placeholder}" aria-label="ช่องสแกนบาร์โค้ด">
     <button type="button" class="b2 cam" data-cam>กล้อง</button>
-  </div>`;
+  </div>`; };

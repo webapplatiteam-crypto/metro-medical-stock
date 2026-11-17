@@ -3,17 +3,17 @@ import { sb, q, can, DOC, STATUS, esc, opt, n0, dTH, statusBadge, typeBadge, whN
 
 export async function render(main, { route, query }) {
   const approvals = route === 'approvals';
-  const f = { type: query.get('type') || '', status: approvals ? 'pending' : (query.get('status') || ''), from: approvals ? '' : addDays(today(), -30), to: '', term: '' };
+  const f = { type: query.get('type') || '', status: approvals ? 'pending' : (query.get('status') || ''), from: '', to: '', term: '' };
 
   main.innerHTML = `${pageHead(approvals ? 'รออนุมัติ' : 'เอกสารทั้งหมด', approvals ? 'เอกสารที่เจ้าหน้าที่ส่งมา — เปิดเอกสารเพื่ออนุมัติหรือไม่อนุมัติ' : 'ใบรับเข้า · จ่ายออก · ปรับยอด · โอนย้าย · ตรวจนับ · ทำลาย/คืน',
     `<button class="b2" data-xls>ส่งออก Excel</button>${can.operate() ? '<a class="b1" href="#/receive">+ รับเข้า</a><a class="b1" href="#/issue">− จ่ายออก</a>' : ''}`)}
-    <section class="card noprint"><div class="grid g5">
+    <details class="card noprint filters"><summary>ตัวกรอง / ค้นหา</summary><div class="grid g5">
       <label class="f">ค้นหา<input class="i" data-f="term" placeholder="เลขที่ / อ้างอิง / หมายเหตุ"></label>
       <label class="f">ตั้งแต่วันที่<input class="i" type="date" data-f="from" value="${f.from}"></label>
       <label class="f">ถึงวันที่<input class="i" type="date" data-f="to" value="${f.to}"></label>
       <label class="f">สถานะ<select class="i" data-f="status">${opt('', 'ทุกสถานะ', f.status)}${Object.entries(STATUS).map(([k, v]) => opt(k, v[0], f.status)).join('')}</select></label>
       <label class="f">ประเภท<select class="i" data-f="type">${opt('', 'ทุกประเภท', f.type)}${Object.entries(DOC).map(([k, v]) => opt(k, v.label, f.type)).join('')}</select></label>
-    </div></section>
+    </div></details>
     <section class="card"><div class="tw"><table class="t"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ประเภท</th><th>คลัง</th><th>คู่ค้า / อ้างอิง</th><th class="num">รายการ</th><th class="num">จำนวนรวม</th><th>ผู้ทำ</th><th>สถานะ</th></tr></thead><tbody data-b></tbody></table></div>
     <span class="sub" data-c></span></section>`;
 

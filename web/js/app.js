@@ -103,20 +103,22 @@ function renderShell() {
         <div class="who"><b>${esc(p.full_name || p.email)}</b><small>${ROLE[p.role]}</small></div>
         <button type="button" data-logout>ออก</button></div>
     </nav>
-    <main class="main" id="main" tabindex="-1"></main>
-    <nav class="bottomnav noprint" aria-label="เมนูล่าง">
-      <a href="#/dashboard" data-r="dashboard">หน้าหลัก</a>
-      ${can.operate() ? '<a href="#/receive" data-r="receive">รับเข้า</a><a href="#/issue" data-r="issue">จ่ายออก</a>' : '<a href="#/products" data-r="products">สินค้า</a><a href="#/reports" data-r="reports">รายงาน</a>'}
-      <a href="#/expiry" data-r="expiry">หมดอายุ</a>
-      <button type="button" data-menu>เมนู</button>
-    </nav></div>`;
+    <div class="scrim noprint" data-scrim></div>
+    <div class="mainwrap">
+      <header class="topbar noprint">
+        <button type="button" class="hamb" data-menu aria-label="เปิดเมนู" aria-expanded="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="badge hidden" data-badge="pending"></span></button>
+        <b data-title>Metro Medical</b>
+        <a class="b1 sm" href="#/receive" ${can.operate() ? '' : 'hidden'}>+ รับ</a><a class="b2 sm" href="#/issue" ${can.operate() ? '' : 'hidden'}>− จ่าย</a>
+      </header>
+      <main class="main" id="main" tabindex="-1"></main>
+    </div></div>`;
   $('[data-logout]').onclick = () => sb.auth.signOut();
-  $('[data-menu]').onclick = () => {
-    const m = modal({ title: 'เมนู', body: `<div class="nav" style="background:var(--navy);border-radius:12px;padding:8px">${items.map((n) => `<a href="#/${n.r}">${n.label}</a>`).join('')}</div>
-      <div class="row between" style="margin-top:12px"><span class="sub">${esc(p.full_name || p.email)} · ${ROLE[p.role]}</span><button class="b2 sm" data-out>ออกจากระบบ</button></div>` });
-    $$('a', m.el).forEach((a) => a.addEventListener('click', m.close));
-    $('[data-out]', m.el).onclick = () => { m.close(); sb.auth.signOut(); };
-  };
+  const side = $('.side'); const scrim = $('[data-scrim]'); const hamb = $('[data-menu]');
+  const setOpen = (o) => { side.classList.toggle('open', o); scrim.classList.toggle('on', o); hamb.setAttribute('aria-expanded', String(o)); document.body.style.overflow = o ? 'hidden' : ''; };
+  hamb.onclick = () => setOpen(!side.classList.contains('open'));
+  scrim.onclick = () => setOpen(false);
+  $$('a', side).forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
   refreshBadges();
 }
 
@@ -151,6 +153,8 @@ async function route() {
   try {
     const mod = await import(`./pages/${page}.js`);
     cleanup = await mod.render(main, { route: r, args, query: new URLSearchParams(qs || '') });
+    const t = $('[data-title]'); const h1 = $('h1', main); if (t) t.textContent = h1 ? h1.firstChild?.textContent?.trim() || 'Metro Medical' : 'Metro Medical';
+    labelTables(main);
     main.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   } catch (e) {
@@ -159,6 +163,18 @@ async function route() {
   }
 }
 window.addEventListener('hashchange', route);
+
+// ตารางบนมือถือ: แสดงเป็นการ์ด โดยใช้หัวคอลัมน์เป็นป้ายของแต่ละช่อง
+function labelTables(root) {
+  const run = () => root.querySelectorAll('table.t:not(.lines)').forEach((tb) => {
+    const heads = [...tb.querySelectorAll('thead tr:last-child th')].map((th) => th.textContent.trim());
+    if (!heads.length || tb.querySelector('thead tr + tr')) return;
+    tb.classList.add('stack');
+    tb.querySelectorAll('tbody tr').forEach((tr) => [...tr.children].forEach((td, i) => { if (heads[i] && !td.hasAttribute('colspan')) td.dataset.l = heads[i]; }));
+  });
+  run();
+  new MutationObserver(run).observe(root, { childList: true, subtree: true });
+}
 
 // ---------- เริ่มระบบ ----------
 async function boot() {

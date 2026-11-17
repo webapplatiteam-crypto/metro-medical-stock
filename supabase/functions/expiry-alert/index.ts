@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const url = Deno.env.get('SUPABASE_URL')!;
-    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const service = Deno.env.get('SUPABASE_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!service) return json({ error: 'ฟังก์ชันไม่พบ secret key ของโปรเจกต์ (SUPABASE_SECRET_KEY)' });
     const admin = createClient(url, service, { auth: { persistSession: false } });
 
     // ---- ตรวจสิทธิ์ ----

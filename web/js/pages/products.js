@@ -18,11 +18,11 @@ export async function render(main) {
   main.innerHTML = `${pageHead('สินค้าทั้งหมด', `${all.filter((p) => p.active).length} รายการที่ใช้งาน${showCost ? ' · มูลค่ารวม ฿' + n0(all.reduce((s, p) => s + Number(p.value), 0)) : ''}`,
     `<button class="b2" data-xls>ส่งออก Excel</button>${can.manage() ? '<a class="b2" href="#/settings/import">นำเข้าจาก Excel</a><a class="b1" href="#/product/new">+ เพิ่มสินค้า</a>' : ''}`)}
     ${scanBoxHtml('ยิงบาร์โค้ดเพื่อเปิดการ์ดสินค้า')}
-    <section class="card noprint"><div class="grid g3">
+    <section class="card noprint"><details class="filters"><summary>ตัวกรอง / ค้นหา</summary><div class="grid g3">
       <label class="f">ค้นหา<input class="i" data-term placeholder="ชื่อ รหัส หรือ GTIN"></label>
       <label class="f">กลุ่มสินค้า<select class="i" data-grp>${opt('', 'ทุกกลุ่ม')}${groups.map((g) => opt(g, g)).join('')}</select></label>
       <label class="chk" style="align-self:end;min-height:44px"><input type="checkbox" data-inactive> แสดงสินค้าที่ปิดใช้งาน</label>
-    </div><div class="tabs" data-tabs></div></section>
+    </div></details><div class="tabs" data-tabs></div></section>
     <section class="card"><div class="tw"><table class="t"><thead><tr><th>รหัส</th><th>ชื่อสินค้า</th><th>กลุ่ม / ขนาด</th><th>ติดตาม</th><th class="num">คงเหลือ</th>${showCost ? '<th class="num">ราคาทุน</th><th class="num">มูลค่า</th>' : ''}<th>หมดอายุเร็วสุด</th><th>สถานะ</th></tr></thead><tbody data-b></tbody></table></div></section>`;
 
   function draw() {

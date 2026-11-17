@@ -152,37 +152,43 @@ export async function render(main, { route, args }) {
   }
 
   function rowHtml(l) {
-    const p = l.product;
+    const p = l.product; const u = esc(p.unit || 'ชิ้น');
     const lot = lotsOf(p.id).find((x) => x.lot_id === l.lot_id);
-    const name = `<td class="full" data-l="สินค้า"><b>${esc(p.name)}</b><div class="sub mono">${esc(p.code)}${p.size ? ' · ' + esc(p.size) : ''}${l.location ? ' · ตำแหน่ง ' + esc(l.location) : ''}</div>${lineWarn(l)}</td>`;
-    const qtyInput = (field = 'qty', allowNeg = false) => `<input class="i sm num" style="width:96px;text-align:right" type="number" step="any" ${allowNeg ? '' : 'min="0"'} data-f="${field}" value="${l[field] ?? ''}">`;
-    const del = `<td><button class="b3" data-del aria-label="ลบรายการ">ลบ</button></td>`;
+    const verb = { IN: 'รับเข้า', OUT: 'จ่ายออก', TRF: 'โอน', DSP: 'ทำลาย/คืน', ADJ: 'ปรับ (+/−)', CNT: 'นับได้จริง' }[type];
+    const name = `<td class="c-name full" data-l="สินค้า"><b>${esc(p.name)}</b><div class="sub mono">${esc(p.code)}${p.size ? ' · ' + esc(p.size) : ''}${l.location ? ' · ตำแหน่ง ' + esc(l.location) : ''}</div>${lineWarn(l)}</td>`;
+    const qtyInput = (field = 'qty', allowNeg = false) => `<div class="qtybox"><button type="button" class="stepbtn" data-step="-1" aria-label="ลดจำนวน">−</button><input class="i sm num" style="width:96px;text-align:right" type="number" inputmode="decimal" step="any" ${allowNeg ? '' : 'min="0"'} data-f="${field}" value="${l[field] ?? ''}"><button type="button" class="stepbtn" data-step="1" aria-label="เพิ่มจำนวน">+</button><span class="unit">${u}</span></div>`;
+    const del = `<td class="c-del"><button type="button" class="b3 delbtn" data-del aria-label="ลบรายการนี้">✕ ลบ</button></td>`;
+    const expTxt = l.expiry_date ? dTH(l.expiry_date) + ' ' + expiryBadge(l.expiry_date) : '<span class="sub">ไม่ระบุ</span>';
     const exp = (type === 'IN')
-      ? `<td data-l="วันหมดอายุ"><input class="i sm" type="date" data-f="expiry_date" value="${esc(l.expiry_date)}" ${p.tracking === 'none' ? 'disabled' : ''}></td>`
-      : `<td data-l="หมดอายุ">${(l.newLot) ? `<input class="i sm" type="date" data-f="expiry_date" value="${esc(l.expiry_date)}">` : (l.expiry_date ? dTH(l.expiry_date) + '<br>' + expiryBadge(l.expiry_date) : '<span class="sub">ไม่ระบุ</span>')}</td>`;
-    const avail = `<td class="num" data-l="คงเหลือ">${lot ? n0(lot.qty) : '0'}</td>`;
+      ? `<td class="c-exp" data-l="วันหมดอายุ"><input class="i sm" type="date" data-f="expiry_date" value="${esc(l.expiry_date)}" ${p.tracking === 'none' ? 'disabled' : ''}></td>`
+      : `<td class="c-exp c-info" data-l="หมดอายุ">${l.newLot ? `<input class="i sm" type="date" data-f="expiry_date" value="${esc(l.expiry_date)}">` : expTxt}</td>`;
+    const avail = `<td class="num c-avail c-info" data-l="มีในคลัง">${lot ? n0(lot.qty) : '0'} <span class="unit">${u}</span></td>`;
+    const lotTd = `<td class="c-lot full" data-l="${type === 'IN' ? (p.tracking === 'serial' ? 'Serial' : 'เลข Lot') : 'Lot ที่ใช้ (ระบบเลือกตัวที่หมดอายุก่อนให้)'}">${lotCell(l)}</td>`;
     let cells;
     if (type === 'IN') {
-      cells = `${name}<td data-l="Lot / Serial">${lotCell(l)}</td>${exp}<td class="num" data-l="จำนวน">${qtyInput()}</td>
-        <td class="num" data-l="ราคาทุน/หน่วย"><input class="i sm" style="width:100px;text-align:right" type="number" step="any" min="0" data-f="unit_cost" value="${l.unit_cost ?? ''}"></td>
-        <td class="num" data-l="รวม">${n2(Number(l.qty || 0) * Number(l.unit_cost || 0))}</td>
-        <td data-l="ตำแหน่ง"><input class="i sm" style="width:90px" data-f="location" value="${esc(l.location)}"></td>${del}`;
+      cells = `${name}${lotTd}${exp}<td class="c-qty full" data-l="จำนวนที่${verb}">${qtyInput()}</td>
+        <td class="num" data-l="ราคาทุน/หน่วย"><input class="i sm" style="width:100px;text-align:right" type="number" inputmode="decimal" step="any" min="0" data-f="unit_cost" value="${l.unit_cost ?? ''}"></td>
+        <td class="num c-info" data-l="รวม">${n2(Number(l.qty || 0) * Number(l.unit_cost || 0))}</td>
+        <td data-l="ตำแหน่งเก็บ"><input class="i sm" style="width:90px" data-f="location" value="${esc(l.location)}"></td>${del}`;
     } else if (type === 'CNT') {
       const sys = lot ? Number(lot.qty) : 0; const diff = Number(l.qty || 0) - sys;
-      cells = `${name}<td data-l="Lot / Serial">${lotCell(l)}</td>${exp}<td class="num" data-l="ยอดระบบ">${blind ? '' : n0(sys)}</td>
-        <td class="num" data-l="นับได้">${qtyInput()}</td>
-        <td class="num" data-l="ต่าง" style="font-weight:700;color:${diff < 0 ? '#9A3412' : diff > 0 ? '#0A4DA2' : '#14532D'}">${blind || !l.counted ? '' : (diff > 0 ? '+' : '') + n0(diff)}</td>${del}`;
+      cells = `${name}${lotTd}${exp}<td class="num c-info" data-l="ยอดในระบบ">${blind ? '' : n0(sys)}</td>
+        <td class="num c-qty full" data-l="${verb}">${qtyInput()}</td>
+        <td class="num c-info" data-l="ต่าง" style="font-weight:700;color:${diff < 0 ? '#9A3412' : diff > 0 ? '#0A4DA2' : '#14532D'}">${blind || !l.counted ? '' : (diff > 0 ? '+' : '') + n0(diff)}</td>${del}`;
     } else {
-      const extra = type === 'OUT' ? `<input class="i sm" data-f="override_reason" placeholder="เหตุผลข้าม FEFO (ถ้ามี)" value="${esc(l.override_reason)}">`
-        : (type === 'ADJ' || type === 'DSP') ? `<select class="i sm" data-f="reason">${['', 'ชำรุด / บรรจุภัณฑ์เสียหาย', 'หมดอายุ', 'สูญหาย', 'นับผิดครั้งก่อน', 'พบของเกิน', 'ผลจากการตรวจนับ', 'อื่น ๆ'].map((r) => opt(r, r || '— เลือก —', l.reason)).join('')}</select>` : '';
-      cells = `${name}<td data-l="Lot / Serial">${lotCell(l)}</td>${exp}${avail}<td class="num" data-l="${type === 'ADJ' ? 'ปรับ' : 'จำนวน'}">${qtyInput('qty', type === 'ADJ')}</td><td data-l="หมายเหตุ">${extra}</td>${del}`;
+      const fefo = /FEFO/.test(lineWarn(l)); const needNote = type !== 'OUT' || l.override_reason || l.showNote || fefo;
+      const extra = type === 'OUT'
+        ? (needNote ? `<input class="i sm" data-f="override_reason" placeholder="${fefo ? 'ทำไมไม่จ่าย Lot ที่หมดอายุก่อน' : 'เช่น ส่งด่วน, ลูกค้าขอ Lot นี้'}" value="${esc(l.override_reason)}">` : '<button type="button" class="b3" data-shownote>+ เพิ่มหมายเหตุ</button>')
+        : `<select class="i sm" data-f="reason">${['', 'ชำรุด / บรรจุภัณฑ์เสียหาย', 'หมดอายุ', 'สูญหาย', 'นับผิดครั้งก่อน', 'พบของเกิน', 'ผลจากการตรวจนับ', 'อื่น ๆ'].map((r) => opt(r, r || '— เลือกเหตุผล —', l.reason)).join('')}</select>`;
+      const noteLbl = type === 'OUT' ? (needNote ? (fefo ? 'เหตุผลข้าม FEFO *' : 'หมายเหตุ') : '') : 'เหตุผล';
+      cells = `${name}${lotTd}${exp}${avail}<td class="num c-qty full" data-l="จำนวนที่${verb}">${qtyInput('qty', type === 'ADJ')}</td>${type === 'TRF' ? '' : `<td class="c-note full" ${noteLbl ? `data-l="${noteLbl}"` : ''}>${extra}</td>`}${del}`;
     }
-    return `<tr data-k="${l.key}">${cells}</tr>`;
+    return `<tr class="linecard" data-k="${l.key}">${cells}</tr>`;
   }
 
   function renderLines() {
     $('[data-thead]', main).innerHTML = thead();
-    body.innerHTML = lines.length ? lines.map(rowHtml).join('') : `<tr><td colspan="9" class="empty">ยังไม่มีรายการ — สแกนบาร์โค้ดหรือกด "+ เลือกสินค้า"</td></tr>`;
+    body.innerHTML = lines.length ? lines.map(rowHtml).join('') : `<tr><td colspan="9" class="empty full">ยังไม่มีรายการ — สแกนบาร์โค้ดหรือกด "+ เลือกสินค้า"</td></tr>`;
     const totQty = lines.reduce((s, l) => s + Number(l.qty || 0), 0);
     const totVal = lines.reduce((s, l) => s + Number(l.qty || 0) * Number(type === 'IN' ? (l.unit_cost || 0) : (l.product.cost || 0)), 0);
     $('[data-foot]', main).innerHTML = lines.length ? `<tr><td colspan="9"><div class="row between"><span>${lines.length} รายการ · ${n0(totQty)} หน่วย</span>${can.seeCost() ? `<span>มูลค่า ฿${n2(totVal)}</span>` : ''}</div></td></tr>` : '';
@@ -202,6 +208,10 @@ export async function render(main, { route, args }) {
     renderLines();
   });
   body.addEventListener('click', (e) => {
+    const tr0 = e.target.closest('tr[data-k]'); const l0 = tr0 && lines.find((x) => x.key === Number(tr0.dataset.k));
+    const st = e.target.closest('[data-step]');
+    if (st && l0) { const v = Number(l0.qty || 0) + Number(st.dataset.step); l0.qty = type === 'ADJ' ? v : Math.max(0, v); l0.counted = true; renderLines(); return; }
+    if (e.target.closest('[data-shownote]') && l0) { l0.showNote = true; renderLines(); $(`tr[data-k="${l0.key}"] [data-f="override_reason"]`, main)?.focus(); return; }
     if (!e.target.closest('[data-del]')) return;
     const k = Number(e.target.closest('tr').dataset.k);
     lines = lines.filter((l) => l.key !== k); renderLines();
@@ -351,6 +361,7 @@ export async function render(main, { route, args }) {
     } catch (err) { beep(false); toast(errMsg(err), 'err'); btn.disabled = false; }
   };
 
+  $('[data-post]', main).closest('.row').classList.add('actbar');
   renderHead();
   renderLines();
 }

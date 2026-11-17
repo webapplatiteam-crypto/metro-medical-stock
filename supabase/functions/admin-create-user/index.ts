@@ -14,16 +14,16 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const url = Deno.env.get('SUPABASE_URL')!;
-    const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // รองรับทั้งคีย์แบบใหม่ (sb_secret_…) และแบบเก่า (service_role)
+    const service = Deno.env.get('SUPABASE_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!service) return json({ error: 'ฟังก์ชันไม่พบ secret key ของโปรเจกต์ (SUPABASE_SECRET_KEY)' });
     const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
     if (!token) return json({ error: 'ยังไม่ได้เข้าสู่ระบบ' });
 
-    const caller = createClient(url, anon, { global: { headers: { Authorization: `Bearer ${token}` } } });
-    const { data: { user } } = await caller.auth.getUser(token);
+    const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: { user } } = await admin.auth.getUser(token);
     if (!user) return json({ error: 'เซสชันหมดอายุ เข้าสู่ระบบใหม่' });
 
-    const admin = createClient(url, service, { auth: { persistSession: false } });
     const { data: me } = await admin.from('profiles').select('role, active').eq('id', user.id).single();
     if (!me || me.role !== 'admin' || !me.active) return json({ error: 'เฉพาะผู้ดูแลระบบ' });
 

@@ -37,6 +37,7 @@ export async function render(main) {
       if (!body.email || body.password.length < 10) { toast('กรอกอีเมล และรหัสผ่านอย่างน้อย 10 ตัว', 'err'); return true; }
       const { data, error } = await sb.functions.invoke('admin-create-user', { body });
       if (error || data?.error) { toast('สร้างไม่สำเร็จ: ' + (data?.error || errMsg(error)) + ' — ตรวจว่า deploy Edge Function admin-create-user แล้ว', 'err'); return true; }
+      if (!data?.id) { toast('สร้างไม่สำเร็จ: ฟังก์ชัน admin-create-user ตอบกลับไม่ถูกต้อง — ตรวจว่าวางโค้ดจาก supabase/functions/admin-create-user/index.ts ครบทั้งไฟล์แล้ว Deploy ใหม่', 'err'); return true; }
       toast('สร้างผู้ใช้แล้ว', 'ok'); go('#/users');
     } }],
   });
